@@ -7,13 +7,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Tus credenciales recién horneadas de PostgreSQL en WSL
+// Configuración de PostgreSQL para soportar Render (DATABASE_URL) y localhost
 const pool = new Pool({
-  user: 'admin_helgio',
-  host: 'localhost',
-  database: 'helgio_db',
-  password: 'password123',
-  port: 5432,
+  connectionString: process.env.DATABASE_URL || 'postgresql://admin_helgio:password123@localhost:5432/helgio_db',
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
 });
 
 // ENDPOINT 1: Consultar precios del día
