@@ -116,7 +116,43 @@ app.get('/api/resumen', async (req, res) => {
   }
 });
 
-const PORT = 5000;
-app.listen(PORT, () => {
+const inicializarBD = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS productos (
+        id SERIAL PRIMARY KEY,
+        nombre VARCHAR(255) NOT NULL,
+        precio_kg DECIMAL(10,2) NOT NULL,
+        codigo VARCHAR(100) UNIQUE
+      );
+      CREATE TABLE IF NOT EXISTS ventas (
+        id SERIAL PRIMARY KEY,
+        fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        total DECIMAL(10,2) NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS detalle_ventas (
+        id SERIAL PRIMARY KEY,
+        venta_id INT REFERENCES ventas(id),
+        producto_id INT REFERENCES productos(id),
+        kilos DECIMAL(10,3) NOT NULL,
+        subtotal DECIMAL(10,2) NOT NULL
+      );
+    `);
+
+    await pool.query(`
+      INSERT INTO productos (nombre, precio_kg, codigo) VALUES 
+      ('Huevo Blanco', 42.50, 'huevoBlanco'),
+      ('Azúcar Estándar', 22.00, 'azucarEstandar')
+      ON CONFLICT (codigo) DO NOTHING;
+    `);
+    console.log("Base de datos inicializada correctamente");
+  } catch (err) {
+    console.error("Error al inicializar la base de datos:", err);
+  }
+};
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, async () => {
+  await inicializarBD();
   console.log(`Backend de Distribuidora HelGio escuchando en el puerto ${PORT}`);
 });
